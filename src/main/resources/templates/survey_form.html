@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Information Survey</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Student Information Survey</h4>
+        </div>
+        <div class="card-body">
+            <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+
+            <form th:action="@{/survey}" method="post" class="needs-validation" th:object="${surveyData}">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <input type="text"
+                           class="form-control"
+                           id="name"
+                           th:field="*{name}"
+                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"
+                           placeholder="Enter your name">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="surname" class="form-label">Surname:</label>
+                    <input type="text"
+                           class="form-control"
+                           id="surname"
+                           th:field="*{surname}"
+                           th:classappend="${#fields.hasErrors('surname')} ? 'is-invalid' : ''"
+                           placeholder="Enter your surname">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('surname')}" th:errors="*{surname}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="birthDate" class="form-label">Birth Date:</label>
+                    <input type="date"
+                           class="form-control"
+                           id="birthDate"
+                           th:field="*{birthDate}"
+                           th:classappend="${#fields.hasErrors('birthDate')} ? 'is-invalid' : ''">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="matriculation" class="form-label">Matriculation Number (optional):</label>
+                    <input type="text"
+                           class="form-control"
+                           id="matriculation"
+                           th:field="*{matriculation}"
+                           placeholder="Enter your matriculation number">
+                </div>
+
+                <div class="mb-3">
+                    <label for="country" class="form-label">Country of Origin:</label>
+                    <input type="text"
+                           class="form-control"
+                           id="country"
+                           th:field="*{country}"
+                           th:classappend="${#fields.hasErrors('country')} ? 'is-invalid' : ''"
+                           placeholder="Enter your country of origin">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('country')}" th:errors="*{country}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-Mail:</label>
+                    <input type="email"
+                           class="form-control"
+                           id="email"
+                           th:field="*{email}"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                           placeholder="Enter your preferred e-mail address">
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary"
+                            onclick="window.location.href = '/survey/clear'">Clear Form</button>
+                    <button type="submit" class="btn btn-primary">Save & Continue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
