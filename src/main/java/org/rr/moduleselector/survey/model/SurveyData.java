@@ -24,7 +24,7 @@ public class SurveyData {
     private String surname = "";
 
     @NotNull(message = "Birth date is required")
-    @DateTimeFormat(pattern = "dd.MM.yyyy")
+    @DateTimeFormat(pattern = "dd/MM/yyyy")
     private LocalDate birthDate;
 
     private String matriculation = "";

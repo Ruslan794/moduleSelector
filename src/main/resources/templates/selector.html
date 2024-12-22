@@ -6,7 +6,7 @@
 </head>
 <body class="container py-4">
 
-<h1 class="mb-4">Module Selection (AJAX for Partner Modules)</h1>
+<h1 class="mb-4">Module Selection</h1>
 
 <!-- User Info -->
 <div class="card mb-4">
@@ -104,7 +104,7 @@
                     </li>
                 </ul>
 
-                <h6>Choose Partner University (Study Abroad - AJAX)</h6>
+                <h6>Choose Partner University</h6>
                 <select class="form-select mb-3"
                         name="selectedPartnerUniversity"
                         id="partnerUniversitySelect">
@@ -169,15 +169,12 @@
             </div>
         </div>
 
-        <!-- Nur ein einziger Speicher-Button -->
-        <button type="submit" class="btn btn-primary" id="saveBtn" disabled>Speichern</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn" disabled>Save and download as PDF</button>
     </form>
 </div>
 
-<!-- Bootstrap JS-Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Unser JavaScript -->
 <script>
     const partnerSelect = document.getElementById("partnerUniversitySelect");
     const partnerSection = document.getElementById("partnerModulesSection");
@@ -212,13 +209,9 @@
                     let li = document.createElement("li");
                     li.classList.add("list-group-item");
 
-                    // Falls dieses Modul Alternativen hat (m.alternative != null/leer),
-                    // müsstest du radio-Buttons bauen. Hier nur ein einfaches Beispiel:
                     if (!m.alternative || m.alternative.length === 0) {
-                        // Keine Alternativen -> nur Name
                         li.textContent = m.fullName;
                     } else {
-                        // Hat Alternativen -> container + radio
                         let strong = document.createElement("strong");
                         strong.textContent = m.fullName;
                         li.appendChild(strong);
@@ -233,10 +226,8 @@
                             let input = document.createElement("input");
                             input.type = "radio";
                             input.classList.add("form-check-input");
-                            // Name z.B. altASUE1
                             input.name = "alt" + m.code;
                             input.value = alt.code;
-                            // ID -> label "for"
                             input.id = "alt" + alt.code;
 
                             let label = document.createElement("label");
@@ -278,9 +269,6 @@
                 allValid = false;
             }
         });
-
-        // Partneruni optional erzwingen? -> auskommentiert:
-        // if (!partnerSelect.value) { allValid = false; }
 
         saveBtn.disabled = !allValid;
     }

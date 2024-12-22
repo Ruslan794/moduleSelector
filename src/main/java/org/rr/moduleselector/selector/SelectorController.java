@@ -2,15 +2,22 @@ package org.rr.moduleselector.selector;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.rr.moduleselector.pdf.PdfGenerationService;
 import org.rr.moduleselector.selector.model.Module;
 import org.rr.moduleselector.selector.model.Subject;
 import org.rr.moduleselector.selector.model.Universities;
 import org.rr.moduleselector.survey.SurveyService;
 import org.rr.moduleselector.survey.model.SurveyData;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,37 +82,80 @@ public class SelectorController {
         // Zur Startseite/Selector zurück
         return "redirect:/";
     }
-
-    /**
-     * POST /saveAll: Sammelformular aller Semester + Uni.
-     */
     @PostMapping("/saveAll")
-    public String saveAll(@RequestParam Map<String, String> allParams,
-                          HttpSession session) {
-        System.out.println("===== Empfangenes Formular =====");
-        allParams.forEach((key, value) ->
-                System.out.println(key + " = " + value));
-        System.out.println("================================");
+    public ResponseEntity<byte[]> saveAll(@RequestParam Map<String, String> allParams,
+                                          HttpSession session, PdfGenerationService pdfGenerationService) {
+        // Get user data
+        SurveyData userData = surveyService.loadSurveyFromSession(session);
+        Subject selectedSubject = (Subject) session.getAttribute("selectedSubject");
 
-        // Beispiel: Partner-Uni in Session übernehmen (falls gewünscht)
-        if (allParams.containsKey("selectedPartnerUniversity")) {
-            String uniStr = allParams.get("selectedPartnerUniversity");
-            if (!uniStr.isEmpty()) {
-                session.setAttribute("selectedPartnerUniversity", Universities.valueOf(uniStr));
-            } else {
-                session.removeAttribute("selectedPartnerUniversity");
+        // Collect all compulsory modules
+        Map<Integer, List<Module>> compulsoryModules = new HashMap<>();
+        Map<Integer, List<Module>> chosenModules = new HashMap<>();
+
+        // Get modules for each semester
+        for (int semester = 1; semester <= 4; semester++) {
+            compulsoryModules.put(semester,
+                    dataHolder.getCompulsoryModules(selectedSubject, semester));
+
+            // Process chosen modules from the form
+            List<Module> semesterChosen = new ArrayList<>();
+            dataHolder.getAdditionalModules(selectedSubject, semester)
+                    .forEach(module -> {
+                        if (module.getAlternative().isEmpty()) {
+                            semesterChosen.add(module);
+                        } else {
+                            String chosen = allParams.get("alt" + module.getCode());
+                            if (chosen != null) {
+                                module.getAlternative().stream()
+                                        .filter(alt -> alt.getCode().equals(chosen))
+                                        .findFirst()
+                                        .ifPresent(semesterChosen::add);
+                            }
+                        }
+                    });
+            chosenModules.put(semester, semesterChosen);
+        }
+
+        // Get partner university modules if selected
+        List<Module> partnerModules = new ArrayList<>();
+        if (allParams.containsKey("selectedPartnerUniversity") &&
+                !allParams.get("selectedPartnerUniversity").isEmpty()) {
+            Universities uni = Universities.valueOf(allParams.get("selectedPartnerUniversity"));
+            List<Module> allPartnerModules = dataHolder.getStudyAbroadModules(selectedSubject, uni);
+
+            // Filter partner modules to only include selected ones
+            for (Module module : allPartnerModules) {
+                if (module.getAlternative().isEmpty()) {
+                    // Add regular modules
+                    partnerModules.add(module);
+                } else {
+                    // For modules with alternatives, only add the selected one
+                    String chosen = allParams.get("alt" + module.getCode());
+                    if (chosen != null) {
+                        module.getAlternative().stream()
+                                .filter(alt -> alt.getCode().equals(chosen))
+                                .findFirst()
+                                .ifPresent(partnerModules::add);
+                    }
+                }
             }
         }
 
-        // Oder alternative Auswahlen pro Semester auswerten etc...
+        // Generate PDF
+        byte[] pdfContent = pdfGenerationService.generateModulesPdf(
+                userData, compulsoryModules, chosenModules, partnerModules);
 
-        // Zurück zur Seite
-        return "redirect:/selector";
+        // Return PDF with proper headers for browser display
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("inline", "module-selection.pdf");
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+        return new ResponseEntity<>(pdfContent, headers, HttpStatus.OK);
     }
 
-    /**
-     * GET /api/universities/{uni}/modules: Gibt die Studien-Module einer Uni (für das aktuelle Fach) als JSON zurück.
-     */
+
     @GetMapping("/api/universities/{uni}/modules")
     @ResponseBody
     public List<Module> getPartnerModules(@PathVariable("uni") Universities uni,
